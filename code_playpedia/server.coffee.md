@@ -9,5 +9,5 @@ A minimalistic RESTful business layer based on Node.js and MongoDB is used to ac
 The server side 
 Following is a listing of the server side source files of Playpedia. 
 
-  var common = {}
-  common.user = require('./user.js')(app, db, commom);
+	var common = {}
+	common.user = require('./user.js')(app, db, commom);
