@@ -1,0 +1,14 @@
+{
+  "name": "playpedia",
+  "version": "0.1.0",
+  "devDependencies": {
+    "grunt": "~0.4.2",
+    "phantomjs": "~1.9.7-1",
+    "zombie-phantom": "0.0.6",
+    "cheerio": "~0.13.1",
+    "request": "~2.34.0"
+  },
+  "dependencies": {
+    "config": "~0.4.35"
+  }
+}
