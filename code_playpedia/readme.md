@@ -7,6 +7,6 @@ A minimalistic RESTful business layer based on Node.js and MongoDB is used to ac
 ## Content Listing
 
 - [server.coffee.md](./server.coffee.md) 
-- [user.coffee.md](./user.coffee.md) Provides authentication both locally and via social login. 
+- [user.coffee.md](./user.coffee.md) The user authentication module provides authentication both locally and via social login. Passport.js is used to allow the login via e-mail, Facebook or Google account.
 
 
