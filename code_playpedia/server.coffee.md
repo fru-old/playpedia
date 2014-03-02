@@ -19,15 +19,15 @@
     app.use do express.json
     app.use do express.urlencoded
     
-    app.use express.session { secret: 'i am not telling you' }
+    #app.use express.session { secret: 'i am not telling you' }
 
     db.open (err) ->
       if err then throw err
 
       app.get '/hello.txt', (req, res) ->
-        res.send 'Hello World!'
+        res.send 'Hello World'
 
-      common = {app: app, db: db}
+      common = {app: app, db: db, express: express}
       common.user = require('./user.js')(app, db, common)
 
       app.listen 3333, 'localhost', ->

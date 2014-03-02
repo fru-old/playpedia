@@ -34,21 +34,18 @@
 
   app.use(express.urlencoded());
 
-  app.use(express.session({
-    secret: 'i am not telling you'
-  }));
-
   db.open(function(err) {
     var common;
     if (err) {
       throw err;
     }
     app.get('/hello.txt', function(req, res) {
-      return res.send('Hello World!');
+      return res.send('Hello World');
     });
     common = {
       app: app,
-      db: db
+      db: db,
+      express: express
     };
     common.user = require('./user.js')(app, db, common);
     return app.listen(3333, 'localhost', function() {

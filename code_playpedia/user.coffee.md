@@ -4,32 +4,54 @@ The user authentication module provides authentication both locally and via
 social login. Passport.js is used to allow the login via email, Facebook or 
 Google account. 
 
-    passport = require('passport')
     module.exports = (app, db, common) ->
+
+Once a user will login a session will be opened and stored in the mongodb so 
+that even after a server reboot no session will be lost. For this purpose a 
+session middleware needs to be inserted into express. 
+      
+      SessionDB = require('connect-mongo')(common.express)
+      SETTINGS  = require('./config.js') 
+
+      app.use common.express.session
+        secret: SETTINGS.session.secret
+        store:  new SessionDB({db: db})
+
+
+      passport  = require('passport')
+
 
       # Extract id from user
       passport.serializeUser = (user, done) ->
-        done(null, user.id)
-
+        done(null, JSON.stringify(user))
 
       # Find user in database
-      passport.deserializeUser = (id, done) ->
-        done(null, { id: id })
+      passport.deserializeUser = (user, done) ->
+        done(null, JSON.parse(user))
+
+      passport.validateUser = (user, done) ->
+        done(null, user)
+
+
+
+
 
 
       # Private Methods
-      composeUser = (name, done, args) ->
+      checkUser = (name, done, args) ->
+        profile = { type: name }
         switch name
           when "facebook"
-            profile = args[2]
-            done(null, { id: profile.emails[0].value })
+            profile.email = args[2]?.emails[0]?.value
+            done(null, profile)
           when "google"
-            profile = args[1]
-            done(null, { id: profile.emails[0].value })
+            profile.email = args[1]?.emails[0]?.value
+            done(null, profile)
           when "local"
             user = args[0]
             password = args[1]
             done(null, { id: user })
+        
 
       # Register authentication provider
       register = (name, settings) ->
@@ -38,9 +60,9 @@ Google account.
           failureRedirect: '/login?failure'
         
         Strategy = require('passport-'+name).Strategy
-        compose = (done, args...) ->
-          composeUser(name, done, args )
-        passport.use new Strategy(settings, compose)
+        check = (done, args...) ->
+          checkUser(name, done, args )
+        passport.use new Strategy(settings, check)
 
         return redirect
 
@@ -62,3 +84,4 @@ Google account.
           if do req.isAuthenticated then return do next
           res.redirect '/login'
     
+
