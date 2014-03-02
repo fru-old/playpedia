@@ -1,5 +1,5 @@
 (function() {
-  var app, db, express, mongo, path, relativeStatic, server,
+  var SETTINGS, app, db, expose, express, mongo, path, server,
     __slice = [].slice;
 
   express = require('express');
@@ -10,13 +10,15 @@
 
   mongo = require('mongodb');
 
-  server = new mongo.Server("127.0.0.1", 27017);
+  SETTINGS = require('./config.js');
+
+  server = new mongo.Server(SETTINGS.db.domain, SETTINGS.db.port);
 
   db = new mongo.Db('pp', server, {
     safe: false
   });
 
-  relativeStatic = function() {
+  expose = function() {
     var path;
     path = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
     return express["static"](path.join.apply(path, [__dirname].concat(__slice.call(path))));
@@ -24,9 +26,9 @@
 
   app.use(express.logger('dev'));
 
-  app.use('/static', relativeStatic('code_plugins'));
+  app.use(expose('code_plugins'));
 
-  app.use('/static', relativeStatic('used_temporary', 'code_plugins'));
+  app.use(expose('used_temporary', 'code_plugins'));
 
   app.use(express.cookieParser());
 
@@ -35,7 +37,7 @@
   app.use(express.urlencoded());
 
   db.open(function(err) {
-    var common;
+    var common, domain, port;
     if (err) {
       throw err;
     }
@@ -48,8 +50,10 @@
       express: express
     };
     common.user = require('./user.js')(app, db, common);
-    return app.listen(3333, 'localhost', function() {
-      return console.log('Express started at 3333.');
+    port = SETTINGS.server.port;
+    domain = SETTINGS.server.domain;
+    return app.listen(port, domain, function() {
+      return console.log("Express started at " + port + ".");
     });
   });
 

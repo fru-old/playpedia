@@ -7,7 +7,7 @@ A minimalistic RESTful business layer based on Node.js and MongoDB is used to ac
 ## Content Listing
 
 - [server.coffee.md](./server.coffee.md) 
-- [config.coffee.md](./config.coffee.md) Contains application settings used in production.
+- [config.coffee.md](./config.coffee.md) Contains application settings used during development.
 - [user.coffee.md](./user.coffee.md) The user authentication module provides authentication both locally and via social login.
 
 

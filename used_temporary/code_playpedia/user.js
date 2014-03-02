@@ -1,8 +1,6 @@
 (function() {
-  var __slice = [].slice;
-
   module.exports = function(app, db, common) {
-    var SETTINGS, SessionDB, checkUser, passport, register;
+    var SETTINGS, SessionDB, passport, registerProvider, result, strategies, userdb;
     SessionDB = require('connect-mongo')(common.express);
     SETTINGS = require('./config.js');
     app.use(common.express.session({
@@ -18,59 +16,89 @@
     passport.deserializeUser = function(user, done) {
       return done(null, JSON.parse(user));
     };
-    passport.validateUser = function(user, done) {
-      return done(null, user);
-    };
-    checkUser = function(name, done, args) {
-      var password, profile, user, _ref, _ref1, _ref2, _ref3;
-      profile = {
-        type: name
+    userdb = db.collection("userdata");
+    userdb.findUser = function(profile, done) {
+      var credentials;
+      credentials = {
+        email: profile.email,
+        method: profile.method
       };
-      switch (name) {
-        case "facebook":
-          profile.email = (_ref = args[2]) != null ? (_ref1 = _ref.emails[0]) != null ? _ref1.value : void 0 : void 0;
-          return done(null, profile);
-        case "google":
-          profile.email = (_ref2 = args[1]) != null ? (_ref3 = _ref2.emails[0]) != null ? _ref3.value : void 0 : void 0;
-          return done(null, profile);
-        case "local":
-          user = args[0];
-          password = args[1];
-          return done(null, {
-            id: user
-          });
-      }
+      return userdb.findOne(credentials, function(err, user) {
+        var p;
+        if (err) {
+          return done(err);
+        }
+        p = profile.password;
+        if (p !== void 0 && p !== user.password) {
+          return done("WrongPassword");
+        }
+        return done(null, user);
+      });
     };
-    register = function(name, settings) {
-      var Strategy, check, redirect;
+    userdb.findOrCreateUser = function(profile, done) {
+      return userdb.findUser(profile, function(err, user) {
+        if (err) {
+          return done(err);
+        }
+        if (user) {
+          return done(null, user);
+        }
+        return userdb.insert(profile, function(err, newuser) {
+          if (err) {
+            return done(err);
+          }
+          return done(null, newuser);
+        });
+      });
+    };
+    registerProvider = function(name, settings) {
+      var Strategy, redirect;
       redirect = passport.authenticate(name, {
         successRedirect: '/',
-        failureRedirect: '/login?failure'
+        failureRedirect: '/login?failed'
       });
       Strategy = require('passport-' + name).Strategy;
-      check = function() {
-        var args, done;
-        done = arguments[0], args = 2 <= arguments.length ? __slice.call(arguments, 1) : [];
-        return checkUser(name, done, args);
-      };
-      passport.use(new Strategy(settings, check));
+      passport.use(new Strategy(settings, settings.login));
       return redirect;
     };
-    return module.exports = {
-      facebook: register('facebook', {
-        clientID: "1445183219042769",
-        clientSecret: "6b1e95d61b95e7ec67081df7e396fef6",
-        callbackURL: "http://localhost:3333/login/facebook/callback",
-        scope: ['email']
+    strategies = {
+      facebook: registerProvider('facebook', {
+        clientID: SETTINGS.facebook.clientID,
+        clientSecret: SETTINGS.facebook.clientSecret,
+        callbackURL: SETTINGS.server.fullurl + "/login/facebook/callback",
+        scope: ['email'],
+        login: function(accessToken, refreshToken, profile, done) {
+          var _ref;
+          return done(null, {
+            email: (_ref = profile.emails[0]) != null ? _ref.value : void 0,
+            method: "facebook"
+          });
+        }
       }),
-      google: register('google', {
-        returnURL: 'http://localhost:3333/login/google/callback',
-        realm: 'http://localhost:3333/'
+      google: registerProvider('google', {
+        returnURL: SETTINGS.server.fullurl + '/login/google/callback',
+        realm: SETTINGS.server.fullurl + '/',
+        login: function(identifier, profile, done) {
+          var _ref;
+          return done(null, {
+            email: (_ref = profile.emails[0]) != null ? _ref.value : void 0,
+            method: "google"
+          });
+        }
       }),
-      local: register('local', {
+      local: registerProvider('local', {
         usernameField: 'email',
-        passwordField: 'password'
-      }),
+        passwordField: 'password',
+        login: function(email, password, done) {
+          return done(null, {
+            email: email,
+            method: "local",
+            password: password
+          });
+        }
+      })
+    };
+    result = {
       authenticated: function(req, res, next) {
         if (req.isAuthenticated()) {
           return next();
@@ -78,6 +106,7 @@
         return res.redirect('/login');
       }
     };
+    return result;
   };
 
 }).call(this);
