@@ -73,7 +73,7 @@ after a successfull or failed authentication request.
 Used authentication strategies are lised here including provider specific 
 settings and a function that is executed on login.
 
-      strategies = 
+      signin = 
 
 Facebook (OAuth 2.0) for this method an app needs to be created at Facebook 
 Developers. A different app will be used in production.
@@ -84,9 +84,12 @@ Developers. A different app will be used in production.
           callbackURL: SETTINGS.server.fullurl + "/login/facebook/callback"
           scope: ['email']
           login: (accessToken, refreshToken, profile, done) ->
-            done null, 
-              email: profile.emails[0]?.value
-              method: "facebook"
+            profile.email = profile.emails[0]?.value
+            profile.accessToken = accessToken
+            profile.refreshToken = refreshToken
+            profile.method = 'facebook'
+            userdb.findOrCreateUser profile, done
+              
 
 Google (OpenID) authentication strategy. Playpedia does not need to be 
 registered at google for this.
@@ -95,27 +98,54 @@ registered at google for this.
           returnURL: SETTINGS.server.fullurl + '/login/google/callback'
           realm: SETTINGS.server.fullurl + '/'
           login: (identifier, profile, done) ->
-            done null,
-              email: profile.emails[0]?.value
-              method: "google"
+            profile.email = profile.emails[0]?.value
+            profile.identifier = identifier
+            profile.method = 'google'
+            userdb.findOrCreateUser profile, done
 
-Conventional local strategie that does not rely on OAuth. User login using 
-email and password.
+Conventional local strategie that does not rely on OAuth. User login and
+registration using email and password.
 
         local: registerProvider 'local',
           usernameField: 'email'
           passwordField: 'password'
           login: (email, password, done) ->
-            done null,
+            profile = 
               email: email
-              method: "local"
+              method: 'local'
               password: password
+            userdb.findUser profile, done
+          register: (email, password, done) -> 
+            profile = 
+              email: email
+              method: 'local'
+              password: password
+            userdb.findOrCreateUser profile, done
 
-      result =
+Express routes for the authentication.
+  
+      app.get  '/login/facebook', signin.facebook
+      app.get  '/login/facebook/callback', signin.facebook
+      app.get  '/login/google', signin.google
+      app.get  '/login/google/callback', signin.google
+      app.post '/register', (req, res) ->
+        email = req.body.email
+        password = req.body.password
+        signin.local.register email, password, (err, user) ->
+          passport.authenticate('local') req, res, ->
+            res.redirect '/' 
+      app.post '/login', signin.local
+      app.get  '/logout', (req, res) ->
+        do req.logout
+        res.redirect '/'
+
+Returns a public method to make an express page visible to authenticated
+users only.
+
+      return {
          authenticated: (req, res, next) -> 
           if do req.isAuthenticated then return do next
           res.redirect '/login'
-
-      return result
+      }
     
 

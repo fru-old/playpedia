@@ -1,6 +1,6 @@
 (function() {
   module.exports = function(app, db, common) {
-    var SETTINGS, SessionDB, passport, registerProvider, result, strategies, userdb;
+    var SETTINGS, SessionDB, passport, registerProvider, signin, userdb;
     SessionDB = require('connect-mongo')(common.express);
     SETTINGS = require('./config.js');
     app.use(common.express.session({
@@ -61,7 +61,7 @@
       passport.use(new Strategy(settings, settings.login));
       return redirect;
     };
-    strategies = {
+    signin = {
       facebook: registerProvider('facebook', {
         clientID: SETTINGS.facebook.clientID,
         clientSecret: SETTINGS.facebook.clientSecret,
@@ -69,10 +69,11 @@
         scope: ['email'],
         login: function(accessToken, refreshToken, profile, done) {
           var _ref;
-          return done(null, {
-            email: (_ref = profile.emails[0]) != null ? _ref.value : void 0,
-            method: "facebook"
-          });
+          profile.email = (_ref = profile.emails[0]) != null ? _ref.value : void 0;
+          profile.accessToken = accessToken;
+          profile.refreshToken = refreshToken;
+          profile.method = 'facebook';
+          return userdb.findOrCreateUser(profile, done);
         }
       }),
       google: registerProvider('google', {
@@ -80,25 +81,55 @@
         realm: SETTINGS.server.fullurl + '/',
         login: function(identifier, profile, done) {
           var _ref;
-          return done(null, {
-            email: (_ref = profile.emails[0]) != null ? _ref.value : void 0,
-            method: "google"
-          });
+          profile.email = (_ref = profile.emails[0]) != null ? _ref.value : void 0;
+          profile.identifier = identifier;
+          profile.method = 'google';
+          return userdb.findOrCreateUser(profile, done);
         }
       }),
       local: registerProvider('local', {
         usernameField: 'email',
         passwordField: 'password',
         login: function(email, password, done) {
-          return done(null, {
+          var profile;
+          profile = {
             email: email,
-            method: "local",
+            method: 'local',
             password: password
-          });
+          };
+          return userdb.findUser(profile, done);
+        },
+        register: function(email, password, done) {
+          var profile;
+          profile = {
+            email: email,
+            method: 'local',
+            password: password
+          };
+          return userdb.findOrCreateUser(profile, done);
         }
       })
     };
-    result = {
+    app.get('/login/facebook', signin.facebook);
+    app.get('/login/facebook/callback', signin.facebook);
+    app.get('/login/google', signin.google);
+    app.get('/login/google/callback', signin.google);
+    app.post('/register', function(req, res) {
+      var email, password;
+      email = req.body.email;
+      password = req.body.password;
+      return signin.local.register(email, password, function(err, user) {
+        return passport.authenticate('local')(req, res, function() {
+          return res.redirect('/');
+        });
+      });
+    });
+    app.post('/login', signin.local);
+    app.get('/logout', function(req, res) {
+      req.logout();
+      return res.redirect('/');
+    });
+    return {
       authenticated: function(req, res, next) {
         if (req.isAuthenticated()) {
           return next();
@@ -106,7 +137,6 @@
         return res.redirect('/login');
       }
     };
-    return result;
   };
 
 }).call(this);
