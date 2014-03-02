@@ -1,13 +1,42 @@
-# Playpedia Source
+# Express Server
+    
+    express   = require 'express'
+    path      = require 'path'
+    app       = express()
+    mongo     = require 'mongodb'
+    server    = new mongo.Server("127.0.0.1", 27017)
+    db        = new mongo.Db('pp', server, { safe : false });
 
-Playpedia is a general purpose wiki-framework that uses the Google Caja JavaScript Sandbox. All users can freely contribute both wiki-like content as well as JavaScript extensions. Use cases include the visualization of content or the development of interactive learning and social games. This allows the user community to customize almost all of the client side experience while reducing security concerns and ensuring data integrity.
+    relativeStatic = (path...) -> 
+      express.static path.join(__dirname, path...)
 
-A minimalistic RESTful business layer based on Node.js and MongoDB is used to access content. It allows public and private Playpedia documents to be store and retrieved. To support advanced publication schemes, viewing and writing rights can be granted with low granularity. Mobile is supported via PhoneGap. 
+    app.use express.logger 'dev'
+      
+    app.use('/static', relativeStatic('code_plugins'));
+    app.use('/static', relativeStatic('used_temporary','code_plugins'));
+      
+    app.use do express.cookieParser
+    app.use do express.json
+    app.use do express.urlencoded
+    
+    app.use express.session { secret: 'i am not telling you' }
 
-## Content Listing
+    db.open (err) ->
+      if err then throw err
 
-The server side 
-Following is a listing of the server side source files of Playpedia. 
+      app.get '/hello.txt', (req, res) ->
+        res.send 'Hello World!'
 
-    var common = {}
-    common.user = require('./user.js')(app, db, commom);
+      common = {app: app, db: db}
+      common.user = require('./user.js')(app, db, common)
+
+      app.listen 3333, 'localhost', ->
+        console.log 'Express started at 3333.'
+
+
+
+
+
+    
+
+
