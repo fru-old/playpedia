@@ -1,12 +1,7 @@
 var path = require('path')
 
-// Path to be excluded
-var nonode  = '!**/node_modules/**';
-var nomongo = '!**/used_mongodb/**';
-var notemp  = '!**/used_temporary/**';
-
 // Banner for node mocha tests
-var banner  = "for (var member in require.cache) delete require.cache[member];\n";
+var banner  = "for (var member in require.cache) { if(member.indexOf('test.js')>=0) delete require.cache[member]; }";
 
 // Start mongo command
 var mongo   = path.join(__dirname, "used_mongodb", "mongod")
@@ -31,7 +26,7 @@ module.exports = function(grunt) {
       all: {
         files: [{
           expand: true,
-          src: ['code_playpedia/**/*.coffee.md'],
+          src: ['code_playpedia/**/*.coffee.md', 'code_playpedia/**/*.coffee'],
           dest: 'used_temporary',
           ext: '.js'
         }]
@@ -50,7 +45,7 @@ module.exports = function(grunt) {
     watch: {
       playpedia: {
         files: ['code_playpedia/**'],
-        tasks: ['build', 'simplemocha', 'express'],
+        tasks: ['build', 'express', 'simplemocha'], //
         options: {
           spawn: false
         }
@@ -66,14 +61,27 @@ module.exports = function(grunt) {
     simplemocha: {
       options:{
         //globals: ['should'],
-        //timeout: 3000,
+        timeout: 30000,
         //ignoreLeaks: false,
         //grep: '*-test',
         //ui: 'bdd',
+        spawn: true,
         reporter: 'min'
       },
       server: { 
-        src: ['used_developing/node/**/*-test.js'] 
+        src: ['used_temporary/**/*-test.js'] 
+      }
+    },
+    usebanner: {
+      taskName: {
+        options: {
+          position: 'top',
+          banner: banner,
+          linebreak: true
+        },
+        files: {
+          src: [ 'used_temporary/**/*-test.js' ]
+        }
       }
     },
     'node-inspector': {
@@ -96,8 +104,9 @@ module.exports = function(grunt) {
   grunt.loadNpmTasks('grunt-simple-mocha');
   grunt.loadNpmTasks('grunt-node-inspector');
   grunt.loadNpmTasks('grunt-shell-spawn');
+  grunt.loadNpmTasks('grunt-banner');
 
-  grunt.registerTask('build', ['coffee']);
+  grunt.registerTask('build', ['coffee', 'usebanner']);
   grunt.registerTask('debug', ['node-inspector']);
   grunt.registerTask('default', ['shell:mongo','build', 'express', 'watch']);//, 'uglify'
 

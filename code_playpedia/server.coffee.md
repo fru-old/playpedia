@@ -22,11 +22,12 @@
       if err then throw err
 
       # TODO remove
-      app.get '/hello.txt', (req, res) ->
-        res.send 'Hello World'
+      app.get '/hello', (req, res) ->
+        res.send '<html><body><test>Hello World</test></body></html>'
 
       common = {app: app, db: db, express: express}
       common.user = require('./user.js')(app, db, common)
+      common.permission = require('./permission.js')(app, db, common)
 
       port   = SETTINGS.server.port
       domain = SETTINGS.server.domain

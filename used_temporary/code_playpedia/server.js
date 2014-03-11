@@ -41,8 +41,8 @@
     if (err) {
       throw err;
     }
-    app.get('/hello.txt', function(req, res) {
-      return res.send('Hello World');
+    app.get('/hello', function(req, res) {
+      return res.send('<html><body><test>Hello World</test></body></html>');
     });
     common = {
       app: app,
@@ -50,6 +50,7 @@
       express: express
     };
     common.user = require('./user.js')(app, db, common);
+    common.permission = require('./permission.js')(app, db, common);
     port = SETTINGS.server.port;
     domain = SETTINGS.server.domain;
     return app.listen(port, domain, function() {
