@@ -1,5 +1,5 @@
 (function() {
-  var assert, async, browser, common, config, register, request;
+  var assert, async, browser, register, request, server;
 
   async = require('async');
 
@@ -9,24 +9,24 @@
 
   request = require('request');
 
-  config = require('../config.js');
-
-  common = require('../common.js');
+  server = require('../server.js');
 
   register = "<form method='post'> <input name='username' /> <input name='password' /> <input type='submit' id='register' /> </form>";
 
   describe('Register', function() {
     return it('Simple', function(done) {
       var form;
-      setTimeout((function() {
-        return console.log(common);
-      }), 500);
+      server.onload(function() {
+        return server.app.get('register', function(req, res) {
+          return res.send(register);
+        });
+      });
       form = {
         form: {
           key: 'value'
         }
       };
-      return request.post('http://localhost:3333/register', form, function(err) {
+      return request.get('http://localhost:3333/register', form, function(err) {
         assert.notOk(err);
         return done();
       });
