@@ -1,5 +1,6 @@
+for (var member in require.cache) { if(member.indexOf('used_temporary')>=0) delete require.cache[member]; }
 (function() {
-  var SETTINGS, app, db, expose, express, mongo, path, server,
+  var Mocha, SETTINGS, app, async, common, db, expose, express, fs, mocha, mongo, onfile, path, server, walk,
     __slice = [].slice;
 
   express = require('express');
@@ -16,6 +17,48 @@
 
   db = new mongo.Db('pp', server, {
     safe: false
+  });
+
+  common = require('./common.js');
+
+  Mocha = require('mocha');
+
+  fs = require('fs');
+
+  async = require('async');
+
+  path = require('path');
+
+  walk = function(dir, onfile, done) {
+    var single;
+    single = function(file, after) {
+      file = path.join(".", dir, file);
+      return fs.stat(file, function(err, stat) {
+        if (stat && stat.isDirectory()) {
+          return walk(file, onfile, after);
+        } else {
+          onfile(file);
+          return after();
+        }
+      });
+    };
+    return fs.readdir(dir, function(err, list) {
+      if (err) {
+        return done(err);
+      }
+      console.log(list.length);
+      return async.each(list, single, done);
+    });
+  };
+
+  mocha = new Mocha().timeout(30000).reporter('min');
+
+  onfile = function(file) {
+    return mocha.addFile(file);
+  };
+
+  walk("./used_temporary/code_playpedia/testing", onfile, function() {
+    return mocha.run();
   });
 
   expose = function() {
@@ -37,24 +80,18 @@
   app.use(express.urlencoded());
 
   db.open(function(err) {
-    var common, domain, port;
+    var domain, port;
     if (err) {
       throw err;
     }
     app.get('/hello', function(req, res) {
       return res.send('<html><body><test>Hello World</test></body></html>');
     });
-    common = {
-      app: app,
-      db: db,
-      express: express
-    };
-    common.user = require('./user.js')(app, db, common);
-    common.permission = require('./permission.js')(app, db, common);
     port = SETTINGS.server.port;
     domain = SETTINGS.server.domain;
     return app.listen(port, domain, function() {
-      return console.log("Express started at " + port + ".");
+      common.init(db, app, express);
+      return console.log(("Express started at " + port + ". ") + process.pid);
     });
   });
 

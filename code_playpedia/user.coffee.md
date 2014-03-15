@@ -103,8 +103,8 @@ registered at google for this.
             profile.method = 'google'
             userdb.findOrCreateUser profile, done
 
-Conventional local strategie that does not rely on OAuth. User login and
-registration using email and password.
+Conventional local strategie that does not rely on OAuth. User login using 
+email and password.
 
         local: registerProvider 'local',
           usernameField: 'email'
@@ -115,12 +115,15 @@ registration using email and password.
               method: 'local'
               password: password
             userdb.findUser profile, done
-          register: (email, password, done) -> 
-            profile = 
-              email: email
-              method: 'local'
-              password: password
-            userdb.findOrCreateUser profile, done
+
+Unlike the other staregies the local stratgey also needs a register function.
+
+      signup = (req, done) ->
+        profile = 
+          email: req.body.email
+          method: 'local'
+          password: req.body.password
+        userdb.findOrCreateUser profile, done
 
 Express routes for the authentication.
   
@@ -129,9 +132,7 @@ Express routes for the authentication.
       app.get  '/login/google', signin.google
       app.get  '/login/google/callback', signin.google
       app.post '/register', (req, res) ->
-        email = req.body.email
-        password = req.body.password
-        signin.local.register email, password, (err, user) ->
+        signup req, (err, user) ->
           passport.authenticate('local') req, res, ->
             res.redirect '/' 
       app.post '/login', signin.local
@@ -143,9 +144,13 @@ Returns a public method to make an express page visible to authenticated
 users only.
 
       return {
-         authenticated: (req, res, next) -> 
+        authenticated: (req, res, next) -> 
           if do req.isAuthenticated then return do next
           res.redirect '/login'
+        get: (anonymous) ->
+          error = "This action can't be done anonymously - please login."
+          if anonymous then return null
+          return req.user?._id || throw error 
       }
     
 

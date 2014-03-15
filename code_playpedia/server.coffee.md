@@ -4,10 +4,38 @@
     path      = require 'path'
     app       = express()
     mongo     = require 'mongodb'
-    SETTINGS  = require('./config.js')
+    SETTINGS  = require './config.js'
     server    = new mongo.Server(SETTINGS.db.domain, SETTINGS.db.port)
     db        = new mongo.Db('pp', server, { safe : false });
+    common    = require './common.js'
+
+
+
+    Mocha     = require 'mocha'
+    fs        = require 'fs'
+    async     = require 'async'
+    path      = require 'path'
+    walk = (dir, onfile, done) ->
+      single = (file, after) ->
+        file = path.join(".",dir, file)
+        fs.stat file, (err, stat) ->
+          if stat && do stat.isDirectory
+            walk file, onfile, after
+          else 
+            onfile file
+            do after
+
+      fs.readdir dir, (err, list)->
+        if err then return done err
+        console.log list.length
+        async.each(list, single, done)
+
+    mocha = new Mocha().timeout(30000).reporter('min')
+    onfile = (file) -> mocha.addFile file
+    walk "./used_temporary/code_playpedia/testing", onfile, ->
+      do mocha.run
     
+
     expose = (path...) -> 
       express.static path.join(__dirname, path...)
 
@@ -25,16 +53,12 @@
       app.get '/hello', (req, res) ->
         res.send '<html><body><test>Hello World</test></body></html>'
 
-      common = {app: app, db: db, express: express}
-      common.user = require('./user.js')(app, db, common)
-      common.permission = require('./permission.js')(app, db, common)
-
       port   = SETTINGS.server.port
       domain = SETTINGS.server.domain
 
       app.listen port, domain, ->
-        console.log "Express started at #{port}."
-
+        common.init db, app, express
+        console.log "Express started at #{port}. "+process.pid
 
 
 

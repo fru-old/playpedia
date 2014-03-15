@@ -1,6 +1,6 @@
 (function() {
   module.exports = function(app, db, common) {
-    var SETTINGS, SessionDB, passport, registerProvider, signin, userdb;
+    var SETTINGS, SessionDB, passport, registerProvider, signin, signup, userdb;
     SessionDB = require('connect-mongo')(common.express);
     SETTINGS = require('./config.js');
     app.use(common.express.session({
@@ -98,27 +98,24 @@
             password: password
           };
           return userdb.findUser(profile, done);
-        },
-        register: function(email, password, done) {
-          var profile;
-          profile = {
-            email: email,
-            method: 'local',
-            password: password
-          };
-          return userdb.findOrCreateUser(profile, done);
         }
       })
+    };
+    signup = function(req, done) {
+      var profile;
+      profile = {
+        email: req.body.email,
+        method: 'local',
+        password: req.body.password
+      };
+      return userdb.findOrCreateUser(profile, done);
     };
     app.get('/login/facebook', signin.facebook);
     app.get('/login/facebook/callback', signin.facebook);
     app.get('/login/google', signin.google);
     app.get('/login/google/callback', signin.google);
     app.post('/register', function(req, res) {
-      var email, password;
-      email = req.body.email;
-      password = req.body.password;
-      return signin.local.register(email, password, function(err, user) {
+      return signup(req, function(err, user) {
         return passport.authenticate('local')(req, res, function() {
           return res.redirect('/');
         });
@@ -135,6 +132,16 @@
           return next();
         }
         return res.redirect('/login');
+      },
+      get: function(anonymous) {
+        var error, _ref;
+        error = "This action can't be done anonymously - please login.";
+        if (anonymous) {
+          return null;
+        }
+        return ((_ref = req.user) != null ? _ref._id : void 0) || (function() {
+          throw error;
+        })();
       }
     };
   };

@@ -1,7 +1,11 @@
 var path = require('path')
 
 // Banner for node mocha tests
-var banner  = "for (var member in require.cache) { if(member.indexOf('test.js')>=0) delete require.cache[member]; }";
+function clearCacheBaner(target){
+  return "for (var member in require.cache) {"
+    + " if(member.indexOf('"+target+"')>=0) delete require.cache[member];"
+    +" }";
+}
 
 // Start mongo command
 var mongo   = path.join(__dirname, "used_mongodb", "mongod")
@@ -39,13 +43,14 @@ module.exports = function(grunt) {
         }
       },
       options: {
-        debug: true
+        debug: true,
+        spawn: false
       }
     },
     watch: {
       playpedia: {
         files: ['code_playpedia/**'],
-        tasks: ['build', 'express', 'simplemocha'], //
+        tasks: ['build', 'express'], //
         options: {
           spawn: false
         }
@@ -65,7 +70,7 @@ module.exports = function(grunt) {
         //ignoreLeaks: false,
         //grep: '*-test',
         //ui: 'bdd',
-        spawn: true,
+        spawn: false,
         reporter: 'min'
       },
       server: { 
@@ -73,14 +78,24 @@ module.exports = function(grunt) {
       }
     },
     usebanner: {
-      taskName: {
+      test: {
         options: {
           position: 'top',
-          banner: banner,
+          banner: clearCacheBaner("used_temporary"),
           linebreak: true
         },
         files: {
           src: [ 'used_temporary/**/*-test.js' ]
+        }
+      },
+      server: {
+        options: {
+          position: 'top',
+          banner: clearCacheBaner("used_temporary"),
+          linebreak: true
+        },
+        files: {
+          src: [ 'used_temporary/code_playpedia/server.js' ]
         }
       }
     },

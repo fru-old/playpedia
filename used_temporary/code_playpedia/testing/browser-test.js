@@ -1,4 +1,4 @@
-for (var member in require.cache) { if(member.indexOf('test.js')>=0) delete require.cache[member]; }
+for (var member in require.cache) { if(member.indexOf('used_temporary')>=0) delete require.cache[member]; }
 (function() {
   var assert, async, browser;
 
