@@ -85,7 +85,7 @@ module.exports = function(grunt) {
           linebreak: true
         },
         files: {
-          src: [ 'used_temporary/**/*-test.js' ]
+          src: [ '-used_temporary/**/*-test.js' ]
         }
       },
       server: {
@@ -95,7 +95,7 @@ module.exports = function(grunt) {
           linebreak: true
         },
         files: {
-          src: [ 'used_temporary/code_playpedia/server.js' ]
+          src: [ '-used_temporary/code_playpedia/server.js' ]
         }
       }
     },

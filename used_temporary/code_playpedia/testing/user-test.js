@@ -1,4 +1,3 @@
-for (var member in require.cache) { if(member.indexOf('used_temporary')>=0) delete require.cache[member]; }
 (function() {
   var assert, async, browser, common, config, register, request;
 

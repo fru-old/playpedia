@@ -20,6 +20,7 @@
   common = {};
 
   init = function(db, app, express) {
+    console.log("!!!!!!!!!!!" + process.pid + "-" + random);
     common.db = db;
     common.app = app;
     common.express = express;
@@ -29,8 +30,6 @@
   };
 
   random = Math.random();
-
-  console.log("!!!!!!!!!!!" + process.pid);
 
   module.exports = {
     pid: process.pid,

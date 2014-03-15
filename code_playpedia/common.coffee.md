@@ -9,6 +9,7 @@
 
     common = {}
     init   = (db, app, express) ->
+      console.log "!!!!!!!!!!!"+process.pid+"-"+random
       common.db         = db
       common.app        = app
       common.express    = express
@@ -16,8 +17,8 @@
       common.permission = require('./permission.js')(app, db, common)
       do onload
     random = Math.random()
+
     
-    console.log "!!!!!!!!!!!"+process.pid
     module.exports = 
       pid: process.pid
       common: common

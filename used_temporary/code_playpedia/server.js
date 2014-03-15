@@ -1,4 +1,3 @@
-for (var member in require.cache) { if(member.indexOf('used_temporary')>=0) delete require.cache[member]; }
 (function() {
   var Mocha, SETTINGS, app, async, common, db, expose, express, fs, mocha, mongo, onfile, path, server, walk,
     __slice = [].slice;
