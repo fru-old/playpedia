@@ -1,12 +1,5 @@
 var path = require('path')
 
-// Banner for node mocha tests
-function clearCacheBaner(target){
-  return "for (var member in require.cache) {"
-    + " if(member.indexOf('"+target+"')>=0) delete require.cache[member];"
-    +" }";
-}
-
 // Start mongo command
 var mongo   = path.join(__dirname, "used_mongodb", "mongod")
 mongo += " --dbpath " + path.join(__dirname, "used_mongodb", "data")
@@ -63,42 +56,6 @@ module.exports = function(grunt) {
         }
       }
     },
-    simplemocha: {
-      options:{
-        //globals: ['should'],
-        timeout: 30000,
-        //ignoreLeaks: false,
-        //grep: '*-test',
-        //ui: 'bdd',
-        spawn: false,
-        reporter: 'min'
-      },
-      server: { 
-        src: ['used_temporary/**/*-test.js'] 
-      }
-    },
-    usebanner: {
-      test: {
-        options: {
-          position: 'top',
-          banner: clearCacheBaner("used_temporary"),
-          linebreak: true
-        },
-        files: {
-          src: [ '-used_temporary/**/*-test.js' ]
-        }
-      },
-      server: {
-        options: {
-          position: 'top',
-          banner: clearCacheBaner("used_temporary"),
-          linebreak: true
-        },
-        files: {
-          src: [ '-used_temporary/code_playpedia/server.js' ]
-        }
-      }
-    },
     'node-inspector': {
       custom: {
         options: {
@@ -119,9 +76,8 @@ module.exports = function(grunt) {
   grunt.loadNpmTasks('grunt-simple-mocha');
   grunt.loadNpmTasks('grunt-node-inspector');
   grunt.loadNpmTasks('grunt-shell-spawn');
-  grunt.loadNpmTasks('grunt-banner');
 
-  grunt.registerTask('build', ['coffee', 'usebanner']);
+  grunt.registerTask('build', ['coffee']);
   grunt.registerTask('debug', ['node-inspector']);
   grunt.registerTask('default', ['shell:mongo','build', 'express', 'watch']);//, 'uglify'
 
