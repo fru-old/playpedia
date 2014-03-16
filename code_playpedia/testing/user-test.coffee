@@ -1,6 +1,6 @@
 async   = require 'async'
 assert  = require('chai').assert
-browser = do require('../mocks/browser.js').browser
+mock    = require '../mocks/utilities.js' 
 request = require 'request'
 server  = require '../server.js'
 

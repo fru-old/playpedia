@@ -45,8 +45,8 @@ this is replaced by a configuration file.
 ## Setup express server
 
     app.use express.logger 'dev'
-    app.use express.static path.resolve('code_plugins')
-    app.use express.static path.resolve('used_temporary','code_plugins') 
+    app.use '/static', express.static path.resolve('code_plugins')
+    app.use '/static', express.static path.resolve('used_temporary','code_plugins') 
     app.use do express.cookieParser
     app.use do express.json
     app.use do express.urlencoded
@@ -61,6 +61,7 @@ this is replaced by a configuration file.
       db.open (err) ->
         if err then throw err
         do module.exports.init
+        mode = process.env.NODE_ENV
         console.log "Application server started at #{port}."
 
 
@@ -99,7 +100,8 @@ this is replaced by a configuration file.
         if err then return done err
         async.each(list, single, done)
 
-    if settings.testing.run 
+    mode = process.env.NODE_ENV
+    if settings.testing.run && (!mode || mode == 'development') 
       mocha = new Mocha().timeout(30000).reporter('min')
       add = (file) -> mocha.addFile file
       run = () -> do mocha.run

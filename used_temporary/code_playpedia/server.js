@@ -1,5 +1,5 @@
 (function() {
-  var Mocha, add, app, async, cbs, common, db, domain, express, fs, mocha, mongo, path, port, run, server, settings, walk;
+  var Mocha, add, app, async, cbs, common, db, domain, express, fs, mocha, mode, mongo, path, port, run, server, settings, walk;
 
   settings = {
     session: {
@@ -47,9 +47,9 @@
 
   app.use(express.logger('dev'));
 
-  app.use(express["static"](path.resolve('code_plugins')));
+  app.use('/static', express["static"](path.resolve('code_plugins')));
 
-  app.use(express["static"](path.resolve('used_temporary', 'code_plugins')));
+  app.use('/static', express["static"](path.resolve('used_temporary', 'code_plugins')));
 
   app.use(express.cookieParser());
 
@@ -67,10 +67,12 @@
 
   app.listen(port, domain, function() {
     return db.open(function(err) {
+      var mode;
       if (err) {
         throw err;
       }
       module.exports.init();
+      mode = process.env.NODE_ENV;
       return console.log("Application server started at " + port + ".");
     });
   });
@@ -123,7 +125,9 @@
     });
   };
 
-  if (settings.testing.run) {
+  mode = process.env.NODE_ENV;
+
+  if (settings.testing.run && (!mode || mode === 'development')) {
     mocha = new Mocha().timeout(30000).reporter('min');
     add = function(file) {
       return mocha.addFile(file);

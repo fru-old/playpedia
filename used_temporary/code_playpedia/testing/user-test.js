@@ -1,11 +1,11 @@
 (function() {
-  var assert, async, browser, register, request, server;
+  var assert, async, mock, register, request, server;
 
   async = require('async');
 
   assert = require('chai').assert;
 
-  browser = require('../mocks/browser.js').browser();
+  mock = require('../mocks/utilities.js');
 
   request = require('request');
 
