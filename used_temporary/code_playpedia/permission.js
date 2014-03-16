@@ -18,8 +18,8 @@
         contentPath: contentPath,
         pluginGuid: pluginGuid,
         userGuid: userGuid,
-        writable: 1000000,
-        readable: 1000000
+        writable: 10000000,
+        readable: 10000000
       };
     };
     setPermission = function(contentGuid, pluginGuid, forUserGuid, readLevel, writeLevel) {

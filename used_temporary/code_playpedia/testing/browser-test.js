@@ -1,16 +1,16 @@
 (function() {
-  var assert, async, browser;
+  var assert, async, mock;
 
   async = require('async');
 
   assert = require('chai').assert;
 
-  browser = require('../mocks/browser.js').browser();
+  mock = require('../mocks/utilities.js');
 
   describe('Browser', function() {
     return it('Hello World', function(done) {
-      return browser.visit('/hello', function() {
-        return browser.text('test', function(test) {
+      return mock.browser.visit('/hello', function() {
+        return mock.browser.text('test', function(test) {
           assert.equal(test, "Hello World");
           return done();
         });

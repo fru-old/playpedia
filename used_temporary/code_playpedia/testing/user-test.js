@@ -11,25 +11,48 @@
 
   server = require('../server.js');
 
-  register = "<form method='post'> <input name='username' /> <input name='password' /> <input type='submit' id='register' /> </form>";
+  register = "<form method='post' action='/register'> <input name='email' id='email' /> <input name='password' id='password' /> <input type='submit' id='register' /> </form>";
 
   describe('Register', function() {
-    return it('Simple', function(done) {
-      var form;
-      server.onload(function() {
-        return server.app.get('register', function(req, res) {
+    before(function(done) {
+      return server.onload(function() {
+        mock.setting({
+          url: {
+            onlogin: "/after"
+          }
+        });
+        server.app.get('/register', function(req, res) {
           return res.send(register);
         });
-      });
-      form = {
-        form: {
-          key: 'value'
-        }
-      };
-      return request.get('http://localhost:3333/register', form, function(err) {
-        assert.notOk(err);
+        server.app.get('/after', function(req, res) {
+          return res.send("<test>succeded</test>");
+        });
         return done();
       });
+    });
+    after(function(done) {
+      mock.restore();
+      return done();
+    });
+    return it('Simple', function(done) {
+      return async.series([
+        function(done) {
+          return mock.browser.visit('/register', done);
+        }, function(done) {
+          return mock.browser.fill('#email', 'test@test.com', done);
+        }, function(done) {
+          return mock.browser.fill('#password', 'test', done);
+        }, function(done) {
+          return mock.browser.pressButton('#register', done);
+        }, function(done) {
+          return mock.browser.until('window.location.pathname !== "/register"', done);
+        }, function(done) {
+          return mock.browser.text('test', function(text) {
+            assert.equal(text, "succeded");
+            return done();
+          });
+        }
+      ], done);
     });
   });
 

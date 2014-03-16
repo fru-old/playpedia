@@ -1,10 +1,10 @@
 async   = require 'async'
 assert  = require('chai').assert
-browser = do require('../mocks/browser.js').browser
+mock    = require '../mocks/utilities.js'
 
 describe 'Browser', ->
   it 'Hello World', (done) ->
-    browser.visit '/hello', ->
-      browser.text 'test', (test) -> 
+    mock.browser.visit '/hello', ->
+      mock.browser.text 'test', (test) -> 
         assert.equal(test, "Hello World")
         done()

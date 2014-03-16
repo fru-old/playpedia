@@ -1,10 +1,10 @@
 (function() {
   module.exports = function(app, db, common) {
-    var SETTINGS, SessionDB, passport, registerProvider, signin, signup, userdb;
+    var SessionDB, passport, registerProvider, server, signin, signup, userdb;
     SessionDB = require('connect-mongo')(common.express);
-    SETTINGS = require('./config.js');
+    server = require('./server.js');
     app.use(common.express.session({
-      secret: SETTINGS.session.secret,
+      secret: server.settings.session.secret,
       store: new SessionDB({
         db: db
       })
@@ -29,7 +29,7 @@
           return done(err);
         }
         p = profile.password;
-        if (p !== void 0 && p !== user.password) {
+        if (user && p !== user.password) {
           return done("WrongPassword");
         }
         return done(null, user);
@@ -51,21 +51,23 @@
         });
       });
     };
-    registerProvider = function(name, settings) {
-      var Strategy, redirect;
-      redirect = passport.authenticate(name, {
-        successRedirect: '/',
+    registerProvider = function(name, options) {
+      var Strategy, redirct, redirect;
+      redirct = {
         failureRedirect: '/login?failed'
+      };
+      redirect = passport.authenticate(name, redirect, function(req, res) {
+        return res.redirect(server.settings.url.onlogin);
       });
       Strategy = require('passport-' + name).Strategy;
-      passport.use(new Strategy(settings, settings.login));
+      passport.use(new Strategy(options, options.login));
       return redirect;
     };
     signin = {
       facebook: registerProvider('facebook', {
-        clientID: SETTINGS.facebook.clientID,
-        clientSecret: SETTINGS.facebook.clientSecret,
-        callbackURL: SETTINGS.server.fullurl + "/login/facebook/callback",
+        clientID: server.settings.facebook.clientID,
+        clientSecret: server.settings.facebook.clientSecret,
+        callbackURL: server.settings.server.fullurl + "/login/facebook/callback",
         scope: ['email'],
         login: function(accessToken, refreshToken, profile, done) {
           var _ref;
@@ -77,8 +79,8 @@
         }
       }),
       google: registerProvider('google', {
-        returnURL: SETTINGS.server.fullurl + '/login/google/callback',
-        realm: SETTINGS.server.fullurl + '/',
+        returnURL: server.settings.server.fullurl + '/login/google/callback',
+        realm: server.settings.server.fullurl + '/',
         login: function(identifier, profile, done) {
           var _ref;
           profile.email = (_ref = profile.emails[0]) != null ? _ref.value : void 0;
@@ -117,14 +119,14 @@
     app.post('/register', function(req, res) {
       return signup(req, function(err, user) {
         return passport.authenticate('local')(req, res, function() {
-          return res.redirect('/');
+          return res.redirect(server.settings.url.onlogin);
         });
       });
     });
     app.post('/login', signin.local);
     app.get('/logout', function(req, res) {
       req.logout();
-      return res.redirect('/');
+      return res.redirect(server.settings.url.onlogout);
     });
     return {
       authenticated: function(req, res, next) {

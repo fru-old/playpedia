@@ -22,8 +22,8 @@ This can be used annonymously to create novel content with high read and write a
           contentPath: contentPath
           pluginGuid:  pluginGuid
           userGuid:    userGuid
-          writable:    1000000
-          readable:    1000000
+          writable:    10000000
+          readable:    10000000
         #perm.find
 
 

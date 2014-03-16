@@ -11,10 +11,10 @@ that even after a server reboot no session will be lost. For this purpose a
 session middleware needs to be inserted into express. 
       
       SessionDB = require('connect-mongo') common.express
-      SETTINGS  = require('./config.js')
+      server    = require('./server.js')
 
       app.use common.express.session
-        secret: SETTINGS.session.secret
+        secret: server.settings.session.secret
         store:  new SessionDB({db: db})
 
 Passport.js is initialized to store the full user object in the mongodb session
@@ -43,7 +43,7 @@ checkt at this point as well.
         userdb.findOne credentials, (err, user) ->
           if err then return done err
           p = profile.password
-          if p != undefined and p != user.password
+          if user and p != user.password
             return done "WrongPassword" 
           return done null, user
 
@@ -62,12 +62,13 @@ With passport.js every authentication provider needs to be registerd. For this
 purpose a helper function has been created. This contains the redirect urls used
 after a successfull or failed authentication request.
 
-      registerProvider = (name, settings) ->
-        redirect = passport.authenticate name,
-          successRedirect: '/'
+      registerProvider = (name, options) ->
+        redirct = 
           failureRedirect: '/login?failed'
+        redirect = passport.authenticate name, redirect, (req, res)->
+          res.redirect server.settings.url.onlogin
         Strategy = require('passport-'+name).Strategy
-        passport.use new Strategy(settings, settings.login)
+        passport.use new Strategy(options, options.login)
         return redirect
 
 Used authentication strategies are lised here including provider specific 
@@ -79,9 +80,9 @@ Facebook (OAuth 2.0) for this method an app needs to be created at Facebook
 Developers. A different app will be used in production.
 
         facebook: registerProvider 'facebook',
-          clientID: SETTINGS.facebook.clientID
-          clientSecret: SETTINGS.facebook.clientSecret
-          callbackURL: SETTINGS.server.fullurl + "/login/facebook/callback"
+          clientID: server.settings.facebook.clientID
+          clientSecret: server.settings.facebook.clientSecret
+          callbackURL: server.settings.server.fullurl + "/login/facebook/callback"
           scope: ['email']
           login: (accessToken, refreshToken, profile, done) ->
             profile.email = profile.emails[0]?.value
@@ -95,8 +96,8 @@ Google (OpenID) authentication strategy. Playpedia does not need to be
 registered at google for this.
 
         google: registerProvider 'google',
-          returnURL: SETTINGS.server.fullurl + '/login/google/callback'
-          realm: SETTINGS.server.fullurl + '/'
+          returnURL: server.settings.server.fullurl + '/login/google/callback'
+          realm: server.settings.server.fullurl + '/'
           login: (identifier, profile, done) ->
             profile.email = profile.emails[0]?.value
             profile.identifier = identifier
@@ -134,11 +135,11 @@ Express routes for the authentication.
       app.post '/register', (req, res) ->
         signup req, (err, user) ->
           passport.authenticate('local') req, res, ->
-            res.redirect '/' 
+            res.redirect server.settings.url.onlogin
       app.post '/login', signin.local
       app.get  '/logout', (req, res) ->
         do req.logout
-        res.redirect '/'
+        res.redirect server.settings.url.onlogout
 
 Returns a public method to make an express page visible to authenticated
 users only.
@@ -152,5 +153,4 @@ users only.
           if anonymous then return null
           return req.user?._id || throw error 
       }
-    
 

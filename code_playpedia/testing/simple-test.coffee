@@ -1,4 +1,3 @@
-# for (member in require.cache) delete require.cache[member];
 
 assert = require('chai').assert;
 

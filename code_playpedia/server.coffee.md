@@ -22,6 +22,10 @@ this is replaced by a configuration file.
       facebook:  
         clientID: '1445183219042769'
         clientSecret: '6b1e95d61b95e7ec67081df7e396fef6'
+      # Routing settings
+      url:
+        onlogin: '/'
+        onlogout: '/'
       # Configure testing environment
       testing:
         run: true
@@ -30,16 +34,16 @@ this is replaced by a configuration file.
 
 ## Requirements
     
-    express = require 'express'
-    path    = require 'path'
-    app     = express()
-    mongo   = require 'mongodb'
-    server  = new mongo.Server(settings.db.domain, settings.db.port)
-    db      = new mongo.Db('pp', server, { safe : false });
-    common  = require './common.js'
-    Mocha   = require 'mocha'
-    fs      = require 'fs'
-    async   = require 'async'
+    express  = require 'express'
+    path     = require 'path'
+    app      = express()
+    mongo    = require 'mongodb'
+    server   = new mongo.Server(settings.db.domain, settings.db.port)
+    db       = new mongo.Db('pp', server, { safe : false });
+    Mocha    = require 'mocha'
+    fs       = require 'fs'
+    async    = require 'async'
+    passport = require 'passport'
 
 
 ## Setup express server
@@ -50,6 +54,8 @@ this is replaced by a configuration file.
     app.use do express.cookieParser
     app.use do express.json
     app.use do express.urlencoded
+    app.use do passport.initialize
+    app.use do passport.session
 
     # TODO: Remove example service
     app.get '/hello', (req, res) ->
@@ -82,7 +88,6 @@ this is replaced by a configuration file.
         @permission = require('./permission.js')(app, db, this)
         do @onload
       settings: settings
-
 
 ## Invoke mocha unit testing
 

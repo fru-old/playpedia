@@ -4,24 +4,39 @@ mock    = require '../mocks/utilities.js'
 request = require 'request'
 server  = require '../server.js'
 
-
 register = "
-  <form method='post'>
-    <input name='username' />
-    <input name='password' />
+  <form method='post' action='/register'>
+    <input name='email' id='email' />
+    <input name='password' id='password' />
     <input type='submit' id='register' />
-  </form>
-"
+  </form>"
 
 describe 'Register', ->
-  it 'Simple', (done) ->
+  
+  # Setup settings and services
+  before (done) ->
     server.onload ->
-      server.app.get 'register', (req, res) ->
+      mock.setting { url: onlogin: "/after" }
+      server.app.get '/register', (req, res) ->
         res.send register
-
-    form = form:
-      key: 'value'
-
-    request.get 'http://localhost:3333/register', form, (err) ->
-      assert.notOk err 
+      server.app.get '/after', (req, res) ->
+        res.send "<test>succeded</test>"
       do done
+
+  # Restore settings
+  after (done) ->
+    do mock.restore
+    do done
+
+  # Simple test case
+  it 'Simple', (done) ->
+    async.series [
+      (done) -> mock.browser.visit '/register', done
+      (done) -> mock.browser.fill '#email', 'test@test.com', done
+      (done) -> mock.browser.fill '#password', 'test', done
+      (done) -> mock.browser.pressButton '#register', done
+      (done) -> mock.browser.until 'window.location.pathname !== "/register"', done
+      (done) -> mock.browser.text 'test', (text) -> 
+        assert.equal(text, "succeded")        
+        do done
+    ], done

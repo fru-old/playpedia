@@ -1,5 +1,5 @@
 (function() {
-  var Mocha, add, app, async, cbs, common, db, domain, express, fs, mocha, mode, mongo, path, port, run, server, settings, walk;
+  var Mocha, add, app, async, cbs, db, domain, express, fs, mocha, mode, mongo, passport, path, port, run, server, settings, walk;
 
   settings = {
     session: {
@@ -17,6 +17,10 @@
     facebook: {
       clientID: '1445183219042769',
       clientSecret: '6b1e95d61b95e7ec67081df7e396fef6'
+    },
+    url: {
+      onlogin: '/',
+      onlogout: '/'
     },
     testing: {
       run: true
@@ -37,13 +41,13 @@
     safe: false
   });
 
-  common = require('./common.js');
-
   Mocha = require('mocha');
 
   fs = require('fs');
 
   async = require('async');
+
+  passport = require('passport');
 
   app.use(express.logger('dev'));
 
@@ -56,6 +60,10 @@
   app.use(express.json());
 
   app.use(express.urlencoded());
+
+  app.use(passport.initialize());
+
+  app.use(passport.session());
 
   app.get('/hello', function(req, res) {
     return res.send('<html><body><test>Hello World</test></body></html>');
